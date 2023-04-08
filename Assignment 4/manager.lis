@@ -1,0 +1,434 @@
+     1                                  ;****************************************************************************************************************************
+     2                                  ;Program name: "Benchmark". This program will benchmark the performance of the square root instruction in SSE and also the 
+     3                                  ;square root program in the standard C library .
+     4                                  ;Copyright (C) 2023 Kevin Ortiz.                                                                            *
+     5                                  ;                                                                                                                           *
+     6                                  ;This file is part of the software program "Benchmark".                                                                   *
+     7                                  ;Benchmark is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License   *
+     8                                  ;version 3 as published by the Free Software Foundation.                                                                    *
+     9                                  ;Benchmark is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied          *
+    10                                  ;warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.     *
+    11                                  ;A copy of the GNU General Public License v3 is available here:  <https:;www.gnu.org/licenses/>.                            *
+    12                                  ;****************************************************************************************************************************
+    13                                  
+    14                                  ;=======1=========2=========3=========4=========5=========6=========7=========8=========9=========0=========1=========2=========3**
+    15                                  ;
+    16                                  ;Author information
+    17                                  ;  Author name: Kevin Ortiz
+    18                                  ;  Author email: keortiz@csu.fullerton.edu
+    19                                  ;
+    20                                  ;Program information
+    21                                  ;  Program name: Benchmark
+    22                                  ;  Programming languages: one modules in C and three modules in x86
+    23                                  ;  Date program began: 2023 April 3
+    24                                  ;  Date of last update: 2023 April 3
+    25                                  ;  Comments reorganized: 2023 April 3
+    26                                  ;  Files in this program:main.c, manager.asm, get_clock_freq.asm, getradicand.asm, r.sh, rg.sh
+    27                                  ;  Status: Complete. Program was tested extensively with no errors.
+    28                                  ;
+    29                                  ;Purpose
+    30                                  ;  This program will manage the Benchmark program
+    31                                  ;
+    32                                  ;This file
+    33                                  ;   File name: manager.asm
+    34                                  ;   Language: x86-64
+    35                                  ;   Syntax: Intel
+    36                                  ;   Max page width: 132 columns
+    37                                  ;   Assemble: nasm -f elf64 -l manager.lis -o manager.o manager.asm
+    38                                  ;   Optimal print specification: 132 columns width, 7 points, monospace, 8½x11 paper
+    39                                  ;
+    40                                  ;=======1=========2=========3=========4=========5=========6=========7=========8=========9=========0=========1=========2=========3**
+    41                                  
+    42                                  
+    43                                  ;===== Begin code area ===========================================================================================================
+    44                                  
+    45                                  ;Declaration
+    46                                  
+    47                                  ;extern functions
+    48                                  extern printf
+    49                                  extern scanf
+    50                                  
+    51                                  ;extern modules
+    52                                  extern getradicand
+    53                                  
+    54                                  ; declare max bytes for cpu name
+    55                                  INPUT_SIZE equ 256
+    56                                  
+    57                                  global manager
+    58                                  
+    59                                  segment .data
+    60                                  
+    61 00000000 57656C636F6D652074-     welcome  db "Welcome to Square Root Benchmarks by Kevin Ortiz",10,0
+    61 00000009 6F2053717561726520-
+    61 00000012 526F6F742042656E63-
+    61 0000001B 686D61726B73206279-
+    61 00000024 204B6576696E204F72-
+    61 0000002D 74697A0A00         
+    62 00000032 466F7220637573746F-     customer_service db "For customer service contact me at keortiz@csu.fullerton.edu",10,0
+    62 0000003B 6D6572207365727669-
+    62 00000044 636520636F6E746163-
+    62 0000004D 74206D65206174206B-
+    62 00000056 656F7274697A406373-
+    62 0000005F 752E66756C6C657274-
+    62 00000068 6F6E2E6564750A00   
+    63 00000070 596F75722043505520-     display_cpu db "Your CPU is %s",10,0
+    63 00000079 69732025730A00     
+    64 00000080 596F7572206D617820-     display_max_clock_speed db "Your max clock speed is %d MHz",10,0
+    64 00000089 636C6F636B20737065-
+    64 00000092 656420697320256420-
+    64 0000009B 4D487A0A00         
+    65 000000A0 546865207371756172-     display_sqrt db "The square root of %.10lf is %.11lf.",10,0
+    65 000000A9 6520726F6F74206F66-
+    65 000000B2 20252E31306C662069-
+    65 000000BB 7320252E31316C662E-
+    65 000000C4 0A00               
+    66 000000C6 4E65787420656E7465-     prompt_iterations db "Next enter the number of times iteration should be performed:",10,0
+    66 000000CF 7220746865206E756D-
+    66 000000D8 626572206F66207469-
+    66 000000E1 6D6573206974657261-
+    66 000000EA 74696F6E2073686F75-
+    66 000000F3 6C6420626520706572-
+    66 000000FC 666F726D65643A0A00 
+    67 00000105 5468652074696D6520-     display_clock db "The time on the clock is %d tics",10,0
+    67 0000010E 6F6E2074686520636C-
+    67 00000117 6F636B206973202564-
+    67 00000120 20746963730A00     
+    68 00000127 5468652062656E6368-     display_progress db "The bench mark of the sqrtsd instruction is in progress.",10,0
+    68 00000130 206D61726B206F6620-
+    68 00000139 746865207371727473-
+    68 00000142 6420696E7374727563-
+    68 0000014B 74696F6E2069732069-
+    68 00000154 6E2070726F67726573-
+    68 0000015D 732E0A00           
+    69 00000161 5468652074696D6520-     display_clock_and_bench db "The time on the clock is %d tics and the benchmark is completed.",10,0
+    69 0000016A 6F6E2074686520636C-
+    69 00000173 6F636B206973202564-
+    69 0000017C 207469637320616E64-
+    69 00000185 207468652062656E63-
+    69 0000018E 686D61726B20697320-
+    69 00000197 636F6D706C65746564-
+    69 000001A0 2E0A00             
+    70 000001A3 54686520656C617073-     display_elapsed_time db "The elapsed time was %d tics",10,0
+    70 000001AC 65642074696D652077-
+    70 000001B5 617320256420746963-
+    70 000001BE 730A00             
+    71 000001C1 5468652074696D6520-     display_one_sqrt_time_ns db "The time for one square root computation is %.10lf tics which equals %.5lf ns.",10,0
+    71 000001CA 666F72206F6E652073-
+    71 000001D3 717561726520726F6F-
+    71 000001DC 7420636F6D70757461-
+    71 000001E5 74696F6E2069732025-
+    71 000001EE 2E31306C6620746963-
+    71 000001F7 732077686963682065-
+    71 00000200 7175616C7320252E35-
+    71 00000209 6C66206E732E0A00   
+    72 00000211 256400                  int_form db "%d",0
+    73 00000214 256C6600                float_form db "%lf",0
+    74 00000218 0A00                    newline db "", 10, 0
+    75 0000021A 546865207469632069-     two_float_form db "The tic is %.5lf and iteration is %.5lf.",10,0
+    75 00000223 7320252E356C662061-
+    75 0000022C 6E6420697465726174-
+    75 00000235 696F6E20697320252E-
+    75 0000023E 356C662E0A00       
+    76 00000244 000000C02A64E041        cpu_speed dq 2200000000.0
+    77 0000024C 0000000065CDCD41        nanoseconds dq 1000000000.0
+    78                                  
+    79                                  
+    80                                  segment .bss
+    81                                  ; === Reserve bytes for cpu name =======================================================
+    82 00000000 <res 100h>              cpu_info: resb INPUT_SIZE ; reserve 256 bytes
+    83                                  
+    84                                  segment .text
+    85                                  
+    86                                  manager:
+    87                                  
+    88                                  ;backup section
+    89                                  
+    90                                  ;Prolog ===== Insurance for any caller of this assembly module ========================================================
+    91                                  ;Any future program calling this module that the data in the caller's GPRs will not be modified.
+    92 00000000 55                      push rbp
+    93 00000001 4889E5                  mov  rbp,rsp
+    94 00000004 57                      push rdi                                                    ;Backup rdi
+    95 00000005 56                      push rsi                                                    ;Backup rsi
+    96 00000006 52                      push rdx                                                    ;Backup rdx
+    97 00000007 51                      push rcx                                                    ;Backup rcx
+    98 00000008 4150                    push r8                                                     ;Backup r8
+    99 0000000A 4151                    push r9                                                     ;Backup r9
+   100 0000000C 4152                    push r10                                                    ;Backup r10
+   101 0000000E 4153                    push r11                                                    ;Backup r11
+   102 00000010 4154                    push r12                                                    ;Backup r12
+   103 00000012 4155                    push r13                                                    ;Backup r13
+   104 00000014 4156                    push r14                                                    ;Backup r14
+   105 00000016 4157                    push r15                                                    ;Backup r15
+   106 00000018 53                      push rbx                                                    ;Backup rbx
+   107 00000019 9C                      pushf                                                       ;Backup rflags
+   108                                  
+   109 0000001A 6A00                    push qword 0 ; to have functions remain in the boundary to end in a 0 and not 8
+   110                                  
+   111                                  ;Executable section
+   112                                  
+   113                                  ;--------------------------------------------------------------------
+   114                                  ;Block to prompt Welcome to Square Root Benchmarks by Kevin Ortiz
+   115 0000001C 6A00                    push qword 0
+   116 0000001E B800000000              mov rax,0
+   117 00000023 48BF-                   mov rdi,welcome
+   117 00000025 [0000000000000000] 
+   118 0000002D E8(00000000)            call printf
+   119 00000032 58                      pop rax
+   120                                  ;--------------------------------------------------------------------
+   121                                  
+   122                                  ;--------------------------------------------------------------------
+   123                                  ;Block to prompt For customer service contact me at keortiz@csu.fullerton.edu
+   124 00000033 6A00                    push qword 0
+   125 00000035 B800000000              mov rax,0
+   126 0000003A 48BF-                   mov rdi,customer_service
+   126 0000003C [3200000000000000] 
+   127 00000044 E8(00000000)            call printf
+   128 00000049 58                      pop rax
+   129                                  ;--------------------------------------------------------------------
+   130                                  
+   131                                  ;--------------------------------------------------------------------
+   132                                  ;Block to get cpu brand name, model name and speed from local device via cpuid
+   133                                  ;get CPU brand name
+   134 0000004A 41BF02000080            mov r15, 0x80000002
+   135 00000050 4C89F8                  mov rax,r15
+   136 00000053 0FA2                    cpuid
+   137                                  
+   138 00000055 48890425[00000000]      mov [cpu_info],rax
+   139 0000005D 48891C25[04000000]      mov [cpu_info + 4],rbx
+   140 00000065 48890C25[08000000]      mov [cpu_info + 8],rcx
+   141 0000006D 48891425[0C000000]      mov [cpu_info + 12],rdx
+   142                                  
+   143                                  ;get CPU model name
+   144 00000075 41BF03000080            mov r15, 0x80000003
+   145 0000007B 4C89F8                  mov rax,r15
+   146 0000007E 0FA2                    cpuid
+   147                                  
+   148 00000080 48890425[10000000]      mov [cpu_info + 16],rax
+   149 00000088 48891C25[14000000]      mov [cpu_info + 20],rbx
+   150 00000090 48890C25[18000000]      mov [cpu_info + 24],rcx
+   151 00000098 48891425[1C000000]      mov [cpu_info + 28],rdx
+   152                                  
+   153                                  ;get CPU speed
+   154 000000A0 41BF04000080            mov r15, 0x80000004
+   155 000000A6 4C89F8                  mov rax,r15
+   156 000000A9 0FA2                    cpuid
+   157                                  
+   158 000000AB 48890425[20000000]      mov [cpu_info + 32],rax
+   159 000000B3 48891C25[24000000]      mov [cpu_info + 36],rbx
+   160 000000BB 48890C25[28000000]      mov [cpu_info + 40],rcx
+   161 000000C3 48891425[2C000000]      mov [cpu_info + 44],rdx
+   162                                  ;--------------------------------------------------------------------
+   163                                  
+   164                                  ;--------------------------------------------------------------------
+   165                                  ;Block to prompt Your CPU is {CPU brand name, model name, speed}
+   166 000000CB 6A00                    push qword 0
+   167 000000CD B800000000              mov rax,0
+   168 000000D2 48BF-                   mov rdi,display_cpu
+   168 000000D4 [7000000000000000] 
+   169 000000DC 48BE-                   mov rsi,cpu_info
+   169 000000DE [0000000000000000] 
+   170 000000E6 E8(00000000)            call printf
+   171 000000EB 58                      pop rax
+   172                                  ;--------------------------------------------------------------------
+   173 000000EC B816000000              mov rax,0x0000000000000016
+   174 000000F1 0FA2                    cpuid
+   175 000000F3 4889DA                  mov rdx,rbx 
+   176                                  
+   177                                  ;--------------------------------------------------------------------
+   178                                  ;Block to prompt Your max clock speed is {max clock speed} MHz
+   179 000000F6 6A00                    push qword 0
+   180 000000F8 B800000000              mov rax,0
+   181 000000FD 48BF-                   mov rdi, display_max_clock_speed
+   181 000000FF [8000000000000000] 
+   182 00000107 4889D6                  mov rsi,rdx
+   183 0000010A E8(00000000)            call printf
+   184 0000010F 58                      pop rax
+   185                                  ;--------------------------------------------------------------------
+   186                                  
+   187                                  ;--------------------------------------------------------------------
+   188                                  ;Block to compute sqrt of radicand number
+   189 00000110 6A00                    push qword 0
+   190 00000112 B800000000              mov rax,0
+   191 00000117 E8(00000000)            call getradicand
+   192 0000011C F2440F10F8              movsd xmm15,xmm0
+   193 00000121 58                      pop rax
+   194                                  ;--------------------------------------------------------------------
+   195                                  
+   196                                  ;--------------------------------------------------------------------
+   197                                  ;Block to prompt The square root of {} is {}.
+   198 00000122 6A00                    push qword 0
+   199 00000124 B802000000              mov rax,2
+   200 00000129 48BF-                   mov rdi,display_sqrt
+   200 0000012B [A000000000000000] 
+   201 00000133 F2410F10C6              movsd xmm0,xmm14
+   202 00000138 F2410F10CF              movsd xmm1,xmm15
+   203 0000013D E8(00000000)            call printf
+   204 00000142 58                      pop rax
+   205                                  ;--------------------------------------------------------------------
+   206                                  
+   207                                  ;--------------------------------------------------------------------
+   208                                  ;Block to prompt Next enter the number of times iteration should be performed:
+   209 00000143 6A00                    push qword 0
+   210 00000145 B800000000              mov rax,0
+   211 0000014A 48BF-                   mov rdi, prompt_iterations
+   211 0000014C [C600000000000000] 
+   212 00000154 E8(00000000)            call printf
+   213 00000159 58                      pop rax
+   214                                  ;--------------------------------------------------------------------
+   215                                  
+   216                                  ;--------------------------------------------------------------------
+   217                                  ;Block to get number of iterations
+   218 0000015A 6A00                    push qword 0
+   219 0000015C B800000000              mov rax,0
+   220 00000161 48BF-                   mov rdi, int_form
+   220 00000163 [1102000000000000] 
+   221 0000016B 4889E6                  mov rsi,rsp
+   222 0000016E E8(00000000)            call scanf
+   223 00000173 4C8B2424                mov r12, [rsp]
+   224 00000177 58                      pop rax
+   225                                  ;--------------------------------------------------------------------
+   226                                  
+   227                                  ;--------------------------------------------------------------------
+   228                                  ;Block to get the time in tics START
+   229 00000178 4831C0                  xor rax, rax
+   230 0000017B 4831D2                  xor rdx,rdx
+   231 0000017E 0FA2                    cpuid
+   232 00000180 0F31                    rdtsc
+   233 00000182 48C1E020                shl rax, 32
+   234 00000186 4801C2                  add rdx, rax
+   235 00000189 4989D6                  mov r14, rdx
+   236                                  ;--------------------------------------------------------------------
+   237                                  
+   238                                  ;--------------------------------------------------------------------
+   239                                  ;Block to prompt The time on the clock is %d tics
+   240 0000018C 6A00                    push qword 0
+   241 0000018E B800000000              mov rax,0
+   242 00000193 48BF-                   mov rdi, display_clock
+   242 00000195 [0501000000000000] 
+   243 0000019D 4C89F6                  mov rsi, r14
+   244 000001A0 E8(00000000)            call printf
+   245 000001A5 58                      pop rax
+   246                                  ;--------------------------------------------------------------------
+   247                                  
+   248                                  ;--------------------------------------------------------------------
+   249                                  ; Block to begin benchmark loop
+   250 000001A6 41BB00000000            mov r11, 0
+   251                                  beginLoop:
+   252 000001AC 4D39E3                      cmp r11, r12
+   253 000001AF 740A                        je exitLoop
+   254                                  
+   255 000001B1 F2410F51C6                  sqrtsd xmm0, xmm14
+   256                                  
+   257 000001B6 49FFC3                      inc r11
+   258 000001B9 EBF1                        jmp beginLoop
+   259                                  exitLoop:
+   260                                  ;--------------------------------------------------------------------
+   261                                  
+   262                                  ;--------------------------------------------------------------------
+   263                                  ;Block to get the time in tics END
+   264 000001BB 4831C0                  xor rax, rax
+   265 000001BE 4831D2                  xor rdx,rdx
+   266 000001C1 0FA2                    cpuid
+   267 000001C3 0F31                    rdtsc
+   268 000001C5 48C1E020                shl rax, 32
+   269 000001C9 4801C2                  add rdx, rax
+   270 000001CC 4989D5                  mov r13, rdx
+   271                                  ;--------------------------------------------------------------------
+   272                                  
+   273                                  ;--------------------------------------------------------------------
+   274                                  ;Block to prompt The bench mark of the sqrtsd instruction is in progress.
+   275 000001CF 6A00                    push qword 0
+   276 000001D1 B800000000              mov rax, 0
+   277 000001D6 48BF-                   mov rdi, display_progress
+   277 000001D8 [2701000000000000] 
+   278 000001E0 E8(00000000)            call printf
+   279 000001E5 58                      pop rax
+   280                                  ;--------------------------------------------------------------------
+   281                                  
+   282                                  ;--------------------------------------------------------------------
+   283                                  ; Block that prompts The time on the clock is %d tics and the benchmark is completed.
+   284 000001E6 6A00                    push qword 0
+   285 000001E8 B800000000              mov rax, 0
+   286 000001ED 48BF-                   mov rdi, display_clock_and_bench
+   286 000001EF [6101000000000000] 
+   287 000001F7 4C89EE                  mov rsi, r13
+   288 000001FA E8(00000000)            call printf
+   289 000001FF 58                      pop rax
+   290                                  ;--------------------------------------------------------------------
+   291                                  
+   292                                  ;--------------------------------------------------------------------
+   293                                  ; Block to get the elapsed time
+   294 00000200 4D29F5                  sub r13, r14
+   295                                  ;--------------------------------------------------------------------
+   296                                  
+   297                                  ;--------------------------------------------------------------------
+   298                                  ; Block that prompts The elapsed time was %d tics
+   299 00000203 6A00                    push qword 0
+   300 00000205 B800000000              mov rax, 0
+   301 0000020A 48BF-                   mov rdi, display_elapsed_time
+   301 0000020C [A301000000000000] 
+   302 00000214 4C89EE                  mov rsi, r13
+   303 00000217 E8(00000000)            call printf
+   304 0000021C 58                      pop rax
+   305                                  ;--------------------------------------------------------------------
+   306                                  
+   307                                  ;--------------------------------------------------------------------
+   308                                  ; Block that calculates tics per one compuation and converts it to nanoseconds
+   309 0000021D 4C89E8                  mov rax, r13 ; eplased time
+   310 00000220 F24C0F2AF8              cvtsi2sd xmm15, rax ; convert r13 to xmm register
+   311                                  
+   312 00000225 4C89E0                  mov rax,r12 ; iterations
+   313 00000228 F24C0F2AF0              cvtsi2sd xmm14,rax ; convert r14 to xmm register
+   314                                  
+   315 0000022D F2450F5EFE              divsd xmm15, xmm14 ; tics per one computation = eplased tics / iterations
+   316                                  
+   317 00000232 F2450F10EF              movsd xmm13, xmm15 ; store tics per one computation in xmm13
+   318                                  
+   319 00000237 F2440F101C25-           movsd xmm11, [cpu_speed] ; set xmm11 to cpu speed in .data - cpu_speed dq 2200000000.0
+   319 0000023D [44020000]         
+   320 00000241 F2440F101425-           movsd xmm10, [nanoseconds] ; set xmm10 to nanoseconds in .data - nanoseconds dq 1000000000.0
+   320 00000247 [4C020000]         
+   321                                  
+   322 0000024B F2450F5EFB              divsd xmm15, xmm11 ; tics per one computation / cpu speed
+   323                                  
+   324 00000250 F2450F59FA              mulsd xmm15, xmm10 ; tics per second * nanoseconds
+   325                                  ;--------------------------------------------------------------------
+   326                                  
+   327                                  ;--------------------------------------------------------------------
+   328                                  ; Block that prompts The time for one square root computation is %1.5lf tics which equals %1.5lf ns.
+   329 00000255 6A00                    push qword 0
+   330 00000257 B802000000              mov rax, 2
+   331 0000025C 48BF-                   mov rdi, display_one_sqrt_time_ns
+   331 0000025E [C101000000000000] 
+   332 00000266 F2410F10C5              movsd xmm0, xmm13 ; store store tics per one computation
+   333 0000026B F2410F10CF              movsd xmm1, xmm15 ; store nanoseconds
+   334 00000270 E8(00000000)            call printf
+   335 00000275 58                      pop rax
+   336                                  ;--------------------------------------------------------------------
+   337                                  
+   338 00000276 58                      pop rax
+   339                                  
+   340                                  ;--------------------------------------------------------------------
+   341                                  ;Block to output the nanoseconds to main.c
+   342 00000277 F2410F10C7              movsd xmm0, xmm15
+   343                                  ;--------------------------------------------------------------------
+   344                                  
+   345                                  ;reverse section
+   346                                  ;===== Restore original values to integer registers ===================================================================
+   347 0000027C 9D                      popf                                                        ;Restore rflags
+   348 0000027D 5B                      pop rbx                                                     ;Restore rbx
+   349 0000027E 415F                    pop r15                                                     ;Restore r15
+   350 00000280 415E                    pop r14                                                     ;Restore r14
+   351 00000282 415D                    pop r13                                                     ;Restore r13
+   352 00000284 415C                    pop r12                                                     ;Restore r12
+   353 00000286 415B                    pop r11                                                     ;Restore r11
+   354 00000288 415A                    pop r10                                                     ;Restore r10
+   355 0000028A 4159                    pop r9                                                      ;Restore r9
+   356 0000028C 4158                    pop r8                                                      ;Restore r8
+   357 0000028E 59                      pop rcx                                                     ;Restore rcx
+   358 0000028F 5A                      pop rdx                                                     ;Restore rdx
+   359 00000290 5E                      pop rsi                                                     ;Restore rsi
+   360 00000291 5F                      pop rdi                                                     ;Restore rdi
+   361 00000292 5D                      pop rbp                                                     ;Restore rbp
+   362                                  
+   363 00000293 C3                      ret
