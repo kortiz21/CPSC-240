@@ -61,18 +61,16 @@ segment .data
 welcome  db "Welcome to Square Root Benchmarks by Kevin Ortiz",10,0
 customer_service db "For customer service contact me at keortiz@csu.fullerton.edu",10,0
 display_cpu db "Your CPU is %s",10,0
-display_max_clock_speed db "Your max clock speed is %d MHz",10,0
+display_max_clock_speed db "Your max clock speed is %ld MHz",10,0
 display_sqrt db "The square root of %.10lf is %.11lf.",10,0
 prompt_iterations db "Next enter the number of times iteration should be performed:",10,0
-display_clock db "The time on the clock is %d tics",10,0
+display_clock db "The time on the clock is %ld tics",10,0
 display_progress db "The bench mark of the sqrtsd instruction is in progress.",10,0
-display_clock_and_bench db "The time on the clock is %d tics and the benchmark is completed.",10,0
-display_elapsed_time db "The elapsed time was %d tics",10,0
-display_one_sqrt_time_ns db "The time for one square root computation is %.10lf tics which equals %.5lf ns.",10,0
+display_clock_and_bench db "The time on the clock is %ld tics and the benchmark is completed.",10,0
+display_elapsed_time db "The elapsed time was %ld tics",10,0
+display_one_sqrt_time_ns db "The time for one square root computation is %.15lf tics which equals %.5lf ns.",10,0
 int_form db "%d",0
 float_form db "%lf",0
-newline db "", 10, 0
-two_float_form db "The tic is %.5lf and iteration is %.5lf.",10,0
 cpu_speed dq 2200000000.0
 nanoseconds dq 1000000000.0
 
@@ -170,7 +168,7 @@ mov rsi,cpu_info
 call printf
 pop rax
 ;--------------------------------------------------------------------
-mov rax,0x0000000000000016
+mov rax,0x16
 cpuid
 mov rdx,rbx 
 
@@ -189,7 +187,8 @@ pop rax
 push qword 0
 mov rax,0
 call getradicand
-movsd xmm15,xmm0
+movsd xmm15,xmm0 ; sqrt of radicand
+movsd xmm14,xmm1 ; original user input
 pop rax
 ;--------------------------------------------------------------------
 
@@ -198,8 +197,8 @@ pop rax
 push qword 0
 mov rax,2
 mov rdi,display_sqrt
-movsd xmm0,xmm14
-movsd xmm1,xmm15
+movsd xmm0,xmm14 ;movsd xmm0,xmm15
+movsd xmm1,xmm15 ;movsd xmm1, xmm14
 call printf
 pop rax
 ;--------------------------------------------------------------------
@@ -226,8 +225,8 @@ pop rax
 
 ;--------------------------------------------------------------------
 ;Block to get the time in tics START
-xor rax, rax
-xor rdx,rdx
+;xor rax, rax
+;xor rdx,rdx
 cpuid
 rdtsc
 shl rax, 32
@@ -246,13 +245,22 @@ pop rax
 ;--------------------------------------------------------------------
 
 ;--------------------------------------------------------------------
+;Block to prompt The bench mark of the sqrtsd instruction is in progress.
+push qword 0
+mov rax, 0
+mov rdi, display_progress
+call printf
+pop rax
+;--------------------------------------------------------------------
+
+;--------------------------------------------------------------------
 ; Block to begin benchmark loop
 mov r11, 0
 beginLoop:
     cmp r11, r12
     je exitLoop
 
-    sqrtsd xmm0, xmm14
+    sqrtsd xmm14, xmm15
 
     inc r11
     jmp beginLoop
@@ -261,22 +269,13 @@ exitLoop:
 
 ;--------------------------------------------------------------------
 ;Block to get the time in tics END
-xor rax, rax
-xor rdx,rdx
+;xor rax, rax
+;xor rdx,rdx
 cpuid
 rdtsc
 shl rax, 32
 add rdx, rax
 mov r13, rdx
-;--------------------------------------------------------------------
-
-;--------------------------------------------------------------------
-;Block to prompt The bench mark of the sqrtsd instruction is in progress.
-push qword 0
-mov rax, 0
-mov rdi, display_progress
-call printf
-pop rax
 ;--------------------------------------------------------------------
 
 ;--------------------------------------------------------------------
@@ -310,11 +309,11 @@ mov rax, r13 ; eplased time
 cvtsi2sd xmm15, rax ; convert r13 to xmm register
 
 mov rax,r12 ; iterations
-cvtsi2sd xmm14,rax ; convert r14 to xmm register
+cvtsi2sd xmm14,rax ; convert r12 to xmm register
 
 divsd xmm15, xmm14 ; tics per one computation = eplased tics / iterations
 
-movsd xmm13, xmm15 ; store tics per one computation in xmm13
+movsd xmm0, xmm15 ; store tics per one computation in xmm13
 
 movsd xmm11, [cpu_speed] ; set xmm11 to cpu speed in .data - cpu_speed dq 2200000000.0
 movsd xmm10, [nanoseconds] ; set xmm10 to nanoseconds in .data - nanoseconds dq 1000000000.0
@@ -329,7 +328,7 @@ mulsd xmm15, xmm10 ; tics per second * nanoseconds
 push qword 0
 mov rax, 2
 mov rdi, display_one_sqrt_time_ns
-movsd xmm0, xmm13 ; store store tics per one computation
+;movsd xmm0, xmm13 ; store store tics per one computation
 movsd xmm1, xmm15 ; store nanoseconds
 call printf
 pop rax

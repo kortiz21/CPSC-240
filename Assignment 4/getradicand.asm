@@ -104,13 +104,14 @@ pop rax
 
 ;--------------------------------------------------------------------
 ;Block to compute sqrt of the radicand
-movsd xmm14,xmm15
-sqrtsd xmm15,xmm15
+movsd xmm14,xmm15 ; original user input
+sqrtsd xmm15,xmm15 ; sqrt of user input
 ;--------------------------------------------------------------------
 
 pop rax
 
-movsd xmm0, xmm15
+movsd xmm0, xmm15 ; copy sqrt to xmm0 register
+movsd xmm1, xmm14 ; copy original user input to xmm1 register
 ;reverse section
 ;===== Restore original values to integer registers ===================================================================
 popf                                                        ;Restore rflags
