@@ -71,7 +71,6 @@ display_clock_and_bench db "The time on the clock is %llu tics and the benchmark
 display_elapsed_time db "The elapsed time was %llu tics",10,0
 display_one_sqrt_time_ns db "The time for one square root computation is %.5lf tics which equals %.5lf ns.",10,0
 int_form db "%d",0
-float_form db "%lf",0
 nanoseconds dq 1000000000.0
 
 
