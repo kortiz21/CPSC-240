@@ -19,11 +19,11 @@
 ;
 ;Program information
 ;  Program name: Benchmark
-;  Programming languages: one modules in C and three modules in x86
-;  Date program began: 2023 April 3
-;  Date of last update: 2023 April 3
-;  Comments reorganized: 2023 April 3
-;  Files in this program:main.c, manager.asm, get_clock_freq.asm, getradicand.asm, r.sh, rg.sh
+;  Programming languages: one modules in C and two modules in x86
+;  Date program began: 2023 April 13
+;  Date of last update: 2023 April 13
+;  Comments reorganized: 2023 April 13
+;  Files in this program: main.c, manager.asm, getradicand.asm, r.sh
 ;  Status: Complete. Program was tested extensively with no errors.
 ;
 ;Purpose

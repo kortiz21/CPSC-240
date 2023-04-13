@@ -19,11 +19,11 @@
 ;
 ;Program information
 ;  Program name: Benchmark
-;  Programming languages: one modules in C and three modules in x86
-;  Date program began: 2023 April 3
-;  Date of last update: 2023 April 3
-;  Comments reorganized: 2023 April 3
-;  Files in this program:main.c, manager.asm, get_clock_freq.asm, getradicand.asm, r.sh, rg.sh
+;  Programming languages: one modules in C and two modules in x86
+;  Date program began: 2023 April 13
+;  Date of last update: 2023 April 13
+;  Comments reorganized: 2023 April 13
+;  Files in this program: main.c, manager.asm, getradicand.asm, r.sh
 ;  Status: Complete. Program was tested extensively with no errors.
 ;
 ;Purpose
@@ -61,17 +61,17 @@ segment .data
 welcome  db "Welcome to Square Root Benchmarks by Kevin Ortiz",10,0
 customer_service db "For customer service contact me at keortiz@csu.fullerton.edu",10,0
 display_cpu db "Your CPU is %s",10,0
-display_max_clock_speed db "Your max clock speed is %ld MHz",10,0
+prompt_max_clock_speed db "Enter your max clock speed in MHz:",10,0
+display_max_clock_speed db "Your max clock speed is %d MHz",10,0
 display_sqrt db "The square root of %.10lf is %.11lf.",10,0
 prompt_iterations db "Next enter the number of times iteration should be performed:",10,0
-display_clock db "The time on the clock is %ld tics",10,0
+display_clock db "The time on the clock is %llu tics",10,0
 display_progress db "The bench mark of the sqrtsd instruction is in progress.",10,0
-display_clock_and_bench db "The time on the clock is %ld tics and the benchmark is completed.",10,0
-display_elapsed_time db "The elapsed time was %ld tics",10,0
-display_one_sqrt_time_ns db "The time for one square root computation is %.15lf tics which equals %.5lf ns.",10,0
+display_clock_and_bench db "The time on the clock is %llu tics and the benchmark is completed.",10,0
+display_elapsed_time db "The elapsed time was %llu tics",10,0
+display_one_sqrt_time_ns db "The time for one square root computation is %.5lf tics which equals %.5lf ns.",10,0
 int_form db "%d",0
 float_form db "%lf",0
-cpu_speed dq 2200000000.0
 nanoseconds dq 1000000000.0
 
 
@@ -168,16 +168,34 @@ mov rsi,cpu_info
 call printf
 pop rax
 ;--------------------------------------------------------------------
-mov rax,0x16
-cpuid
-mov rdx,rbx 
+
+;--------------------------------------------------------------------
+;Block to prompt Enter your max clock speed in MHz:
+push qword 0
+mov rax,0
+mov rdi, prompt_max_clock_speed
+mov rsi,rdx
+call printf
+pop rax
+;--------------------------------------------------------------------
+
+;--------------------------------------------------------------------
+;Block to get max clock speed
+push qword 0
+mov rax,0
+mov rdi, int_form
+mov rsi,rsp
+call scanf
+mov r15, [rsp]
+pop rax
+;--------------------------------------------------------------------
 
 ;--------------------------------------------------------------------
 ;Block to prompt Your max clock speed is {max clock speed} MHz
 push qword 0
 mov rax,0
 mov rdi, display_max_clock_speed
-mov rsi,rdx
+mov rsi,r15
 call printf
 pop rax
 ;--------------------------------------------------------------------
@@ -229,7 +247,7 @@ pop rax
 ;xor rdx,rdx
 cpuid
 rdtsc
-shl rax, 32
+shl rdx, 32
 add rdx, rax
 mov r14, rdx
 ;--------------------------------------------------------------------
@@ -273,7 +291,7 @@ exitLoop:
 ;xor rdx,rdx
 cpuid
 rdtsc
-shl rax, 32
+shl rdx, 32
 add rdx, rax
 mov r13, rdx
 ;--------------------------------------------------------------------
@@ -313,12 +331,15 @@ cvtsi2sd xmm14,rax ; convert r12 to xmm register
 
 divsd xmm15, xmm14 ; tics per one computation = eplased tics / iterations
 
-movsd xmm0, xmm15 ; store tics per one computation in xmm13
+movsd xmm0, xmm15 ; store tics per one computation in xmm0
 
-movsd xmm11, [cpu_speed] ; set xmm11 to cpu speed in .data - cpu_speed dq 2200000000.0
+imul r15, 1000000 ; convert MHz to Hz
+mov rax, r15 ; max clock speed
+cvtsi2sd xmm13, rax ; convert r15 to xmm register
+
 movsd xmm10, [nanoseconds] ; set xmm10 to nanoseconds in .data - nanoseconds dq 1000000000.0
 
-divsd xmm15, xmm11 ; tics per one computation / cpu speed
+divsd xmm15, xmm13 ; tics per one computation / cpu speed
 
 mulsd xmm15, xmm10 ; tics per second * nanoseconds
 ;--------------------------------------------------------------------
@@ -328,7 +349,6 @@ mulsd xmm15, xmm10 ; tics per second * nanoseconds
 push qword 0
 mov rax, 2
 mov rdi, display_one_sqrt_time_ns
-;movsd xmm0, xmm13 ; store store tics per one computation
 movsd xmm1, xmm15 ; store nanoseconds
 call printf
 pop rax
