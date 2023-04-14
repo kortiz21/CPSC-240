@@ -19,7 +19,7 @@
 //
 //Program information
 //  Program name: Benchmark
-//  Programming languages: one modules in C and two modules in x86
+//  Programming languages: one module in C and two modules in x86
 //  Date program began: 2023 April 13
 //  Date of last update: 2023 April 13
 //  Comments reorganized: 2023 April 13
