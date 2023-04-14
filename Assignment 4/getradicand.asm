@@ -102,16 +102,13 @@ movsd xmm15, [rsp]
 pop rax
 ;--------------------------------------------------------------------
 
-;--------------------------------------------------------------------
-;Block to compute sqrt of the radicand
-movsd xmm14,xmm15 ; original user input
-sqrtsd xmm15,xmm15 ; sqrt of user input
-;--------------------------------------------------------------------
-
 pop rax
 
-movsd xmm0, xmm15 ; copy sqrt to xmm0 register
-movsd xmm1, xmm14 ; copy original user input to xmm1 register
+;--------------------------------------------------------------------
+;Block to copy radicand to xmm0 register to use in manager.asm
+movsd xmm0, xmm15 ; 
+;--------------------------------------------------------------------
+
 ;reverse section
 ;===== Restore original values to integer registers ===================================================================
 popf                                                        ;Restore rflags

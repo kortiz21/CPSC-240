@@ -204,9 +204,14 @@ pop rax
 push qword 0
 mov rax,0
 call getradicand
-movsd xmm15,xmm0 ; sqrt of radicand
-movsd xmm14,xmm1 ; original user input
+movsd xmm15,xmm0 ; copy radicand from getradicand to xmm15 to use in manager.asm
 pop rax
+;--------------------------------------------------------------------
+
+;--------------------------------------------------------------------
+;Block to calculate the sqrt
+movsd xmm14, xmm15 ; copy radicand to xmm14
+sqrtsd xmm15, xmm15 ; calculate sqrt of radicand and copy back to xmm15
 ;--------------------------------------------------------------------
 
 ;--------------------------------------------------------------------
