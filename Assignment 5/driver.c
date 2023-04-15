@@ -50,9 +50,9 @@ extern int manager();
 
 int main(int argc, char *argv[])
 {
-  int result = manager();
   printf("Welcome to Asterix Software Development Corporation\n");
+  int result = manager();
   printf("Thank you for using this program.  Have a great day.\n");
-  printf("The driver program received this number %d. A zero will be returned to the OS.  Bye.\n", result);
+  printf("The driver program received this number %d. A zero will be returned to the OS. Bye.\n", result);
 
 }
