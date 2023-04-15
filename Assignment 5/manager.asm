@@ -53,6 +53,8 @@ extern strlen
 extern getchar
 extern sin
 
+;extern isfloat
+
 ; declare max bytes for name
 INPUT_SIZE equ 256
 
@@ -64,6 +66,7 @@ welcome  db "This program Sine Function Benchmark is maintained by Kevin Ortiz",
 prompt_name db "Please enter your name: ",10,0
 display_name db "It is nice to meet you ",0
 prompt_angle db ". Please enter an angle number in degrees: ",10,0
+;invalid_msg db "Invalid. Please try again:",10,0
 prompt_terms db "Thank you. Please enter the number of terms in a Taylor series to be computed: ",10,0
 display_thank_you db "Thank you. The Taylor series will be used to compute the sine of your angle.",10,0
 display_tics db "The computation completed in %llu tics",0
@@ -167,6 +170,7 @@ call printf
 pop rax
 ;--------------------------------------------------------------------
 
+begin:
 ;--------------------------------------------------------------------
 ;Block to prompt Please enter an angle number in degrees:
 push qword 0
@@ -183,9 +187,28 @@ mov rax,0
 mov rdi, float_form
 mov rsi,rsp
 call scanf
+
+;the user's input is checked to see if it is a valid float value
+;mov rax, 0
+;mov rdi, rsp            ;passing user input stored at the top of the stack into the first parameter
+;call isfloat               ;isfloat checks if the user entered a valid float value
+;cmp rax, 0                  ;A condition is met if a valid float is entered it returns 1, else it returns 0
+;je invalidInput     
+
+;jmp exit
+
+;invalidInput:
+;A invalid message displays if the user did not input a valid float value
+;mov rax, 0
+;mov rdi, invalid_msg        ;"The last input was invalid and not entered into the array. "
+;call printf
+;jmp begin
+
+;exit:
 movsd xmm15, [rsp]
 pop rax
 ;--------------------------------------------------------------------
+
 
 ;--------------------------------------------------------------------
 ;Block that calls getchar to clear error when using scanf then fgets since it gets \n char
