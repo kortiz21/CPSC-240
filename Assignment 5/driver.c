@@ -19,11 +19,11 @@
 //
 //Program information
 //  Program name: Data Validation
-//  Programming languages: one module in C and one modules in x86
-//  Date program began: 2023 April 14
-//  Date of last update: 2023 April 14
-//  Comments reorganized: 2023 April 14
-//  Files in this program: driver.c, manager.asm, r.sh
+//  Programming languages: one module in C and two modules in x86
+//  Date program began: 2023 April 20
+//  Date of last update: 2023 April 20
+//  Comments reorganized: 2023 April 20
+//  Files in this program: driver.c, manager.asm, r.sh, isfloat.asm
 //  Status: Complete. Program was tested extensively with no errors.
 //
 //Purpose

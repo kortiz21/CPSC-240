@@ -19,11 +19,11 @@
 ;
 ;Program information
 ;  Program name: Data Validation
-;  Programming languages: one module in C and one modules in x86
-;  Date program began: 2023 April 14
-;  Date of last update: 2023 April 14
-;  Comments reorganized: 2023 April 14
-;  Files in this program: driver.c, manager.asm, r.sh
+;  Programming languages: one module in C and two modules in x86
+;  Date program began: 2023 April 20
+;  Date of last update: 2023 April 20
+;  Comments reorganized: 2023 April 20
+;  Files in this program: driver.c, manager.asm, r.sh, isfloat.asm
 ;  Status: Complete. Program was tested extensively with no errors.
 ;
 ;Purpose
@@ -52,8 +52,9 @@ extern stdin
 extern strlen
 extern getchar
 extern sin
+extern atof
 
-;extern isfloat
+extern isfloat
 
 ; declare max bytes for name
 INPUT_SIZE equ 256
@@ -66,7 +67,7 @@ welcome  db "This program Sine Function Benchmark is maintained by Kevin Ortiz",
 prompt_name db "Please enter your name: ",10,0
 display_name db "It is nice to meet you ",0
 prompt_angle db ". Please enter an angle number in degrees: ",10,0
-;invalid_msg db "Invalid. Please try again:",10,0
+invalid_msg db "Invalid. Please try again:",10,0
 prompt_terms db "Thank you. Please enter the number of terms in a Taylor series to be computed: ",10,0
 display_thank_you db "Thank you. The Taylor series will be used to compute the sine of your angle.",10,0
 display_tics db "The computation completed in %llu tics",0
@@ -77,6 +78,7 @@ display_challenge_tics db "The computation completed in %llu",0
 display_challenge_computation db " tics and gave the value %.9lf",10,0
 float_form db "%lf",0
 int_form db"%d",0
+string_form db "%s",0
 radian_conversion_constant dq 0.017453292519943295
 
 segment .bss
@@ -170,7 +172,6 @@ call printf
 pop rax
 ;--------------------------------------------------------------------
 
-begin:
 ;--------------------------------------------------------------------
 ;Block to prompt Please enter an angle number in degrees:
 push qword 0
@@ -180,36 +181,48 @@ call printf
 pop rax
 ;--------------------------------------------------------------------
 
+begin:
 ;--------------------------------------------------------------------
-;Block that inputs an angle number in degrees
+;Block that inputs an angle number in degrees in string to read from isfloat
 push qword 0
 mov rax,0
-mov rdi, float_form
+mov rdi, string_form
 mov rsi,rsp
 call scanf
-
-;the user's input is checked to see if it is a valid float value
-;mov rax, 0
-;mov rdi, rsp            ;passing user input stored at the top of the stack into the first parameter
-;call isfloat               ;isfloat checks if the user entered a valid float value
-;cmp rax, 0                  ;A condition is met if a valid float is entered it returns 1, else it returns 0
-;je invalidInput     
-
-;jmp exit
-
-;invalidInput:
-;A invalid message displays if the user did not input a valid float value
-;mov rax, 0
-;mov rdi, invalid_msg        ;"The last input was invalid and not entered into the array. "
-;call printf
-;jmp begin
-
-;exit:
-movsd xmm15, [rsp]
-pop rax
 ;--------------------------------------------------------------------
 
+;--------------------------------------------------------------------
+;Block that takes user input from scanf and check if its a float via calling isfloat
+mov rax, 0
+mov rdi, rsp
+call isfloat 
+cmp rax, 0
+je invalid   
+;--------------------------------------------------------------------
 
+;--------------------------------------------------------------------
+;Block that converts the string to a float via atof
+mov rax,0
+mov rdi, rsp
+call atof
+movsd xmm15, xmm0
+pop rax
+
+jmp exit
+;--------------------------------------------------------------------
+
+invalid:
+;--------------------------------------------------------------------
+;Block that prompts Invalid. Please try again:
+mov rax, 0
+mov rdi, invalid_msg
+call printf
+pop rax
+
+jmp begin
+;--------------------------------------------------------------------
+
+exit:
 ;--------------------------------------------------------------------
 ;Block that calls getchar to clear error when using scanf then fgets since it gets \n char
 push qword 0
@@ -288,29 +301,26 @@ addsd xmm10, xmm14 ; xmm10 will hold the total sum of the sequence, add current 
 
 ; compute the next term of the taylor sequence
 ; 2n+3
-; creating temporary register for calculations xmm9
 movsd xmm9, xmm12
 mulsd xmm9, xmm11
 addsd xmm9, xmm13
 ; 2n+2
-; creating temporary register for calculations xmm8
 movsd xmm8, xmm12
 mulsd xmm8, xmm11
 addsd xmm8, xmm12
 ; (2n+3) * (2n+2)
 mulsd xmm8, xmm9
 ; x^2
-; creating temporary register for calculations xmm7
 movsd xmm7, xmm15
 mulsd xmm7, xmm7
 ; (-1 * x^2) / ( (2n+3) * (2n+2) )
 divsd xmm7, xmm8
 mulsd xmm7, xmm5
 
-; multiply the next term with the current term and set the current term to result
+; multiply the next term with the current term
 mulsd xmm14, xmm7
 
-inc r12 ; increment counter
+inc r12
 cvtsi2sd xmm11, r12 ; increment nth term of taylor series
 
 jmp beginLoop
@@ -385,6 +395,7 @@ mov r14, rdx
 ;--------------------------------------------------------------------
 ;Block to calculate sin via <math.h>
 push qword 0
+mov rax, 0
 mulsd xmm6, [radian_conversion_constant]
 movsd xmm0, xmm6
 call sin
