@@ -6,7 +6,8 @@ Kevin Ortiz: keortiz@csu.fullerton.edu
 
 ## Instructions:
 Compile and Run: Use `sh r.sh` in folder directory for specific project.
-Debug: Use `sh rg.sh`.
+
+Debug: Use `sh rg.sh` in folder directory for specific project.
 
 ## Description
 
