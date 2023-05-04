@@ -5,7 +5,8 @@
 Kevin Ortiz: keortiz@csu.fullerton.edu
 
 ## Instructions:
-Compile and Run: Use `sh build.sh`.
+Compile and Run: Use `sh r.sh` in folder directory for specific project.
+Debug: Use `sh rg.sh`.
 
 ## Description
 
