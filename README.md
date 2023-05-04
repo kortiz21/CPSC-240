@@ -1,6 +1,6 @@
 # CPSC 240 Computer Organization and Assembly Language
 
-## Authors:
+## Author:
 
 Kevin Ortiz: keortiz@csu.fullerton.edu
 
