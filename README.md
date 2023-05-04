@@ -14,7 +14,7 @@ This program will create arrays, inputs values into arrays, calculate the magnit
 
 ## Project 3:
 
-This program will generate up to 100 random number using the non-deterministic random number generator found inside of modern X86 microprocessors. Initially random numbers are generated that extend throughout the entire space of all 64-bit IEEE754 numbers. Additionally, the program will normalize each random number so that it lies in the interval 1.0 <= num <2.0.
+This program will generate up to 100 random number using the non-deterministic random number generator found inside of modern X86 microprocessors. Initially random numbers are generated that extend throughout the entire space of all 64-bit IEEE754 numbers. Additionally, the program will normalize each random number so that it lies in the interval 1.0 <= num < 2.0.
 
 ## Project 4:
 
