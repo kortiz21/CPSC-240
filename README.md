@@ -37,6 +37,10 @@ This program will do  input data validation for floats and calculate the sine fu
 
 This program will compute the value of Work (W) in jules from inputs Time (T), Current (I), and Voltage (V).
 
+### Final:
+
+This program will compute the third side of a triangle via `c^2  =  a^2  +  b^2  -  2ab*cos(angle opposite to side c in radians)` and get both the elapsed time in tics of this calculation and get the CPU frequency of the device running the program. 
+
 ## License
 These projects are licensed under the GNU General Public License v3.0 - see the LICENSE file for details.
 
